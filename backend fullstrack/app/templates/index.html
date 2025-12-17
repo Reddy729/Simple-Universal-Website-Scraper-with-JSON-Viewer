@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyftr Scraper</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f8f9fb; }
+    header { margin-bottom: 1.5rem; }
+    form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    input[type="url"] { flex: 1; padding: 0.6rem; font-size: 1rem; }
+    button { padding: 0.6rem 1rem; font-size: 1rem; cursor: pointer; }
+    .status { margin: 0.5rem 0; }
+    .sections { margin-top: 1rem; }
+    details { margin: 0.5rem 0; background: #fff; border: 1px solid #d9dce3; border-radius: 6px; padding: 0.4rem 0.7rem; }
+    summary { font-weight: bold; }
+    pre { background: #1e1e2f; color: #e8e8f2; padding: 0.75rem; border-radius: 6px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Simple Universal Website Scraper</h1>
+    <p>Enter a URL to scrape. The backend performs static scraping first, with a Playwright fallback when needed. Results are shown per section and can be downloaded as JSON.</p>
+  </header>
+
+  <form id="scrape-form">
+    <input id="url-input" type="url" name="url" placeholder="https://example.com" required>
+    <button type="submit">Scrape</button>
+    <button type="button" id="download-btn" disabled>Download JSON</button>
+  </form>
+
+  <div class="status" id="status"></div>
+
+  <section id="results" class="sections"></section>
+
+  <script>
+    const form = document.getElementById('scrape-form');
+    const urlInput = document.getElementById('url-input');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const downloadBtn = document.getElementById('download-btn');
+
+    let lastResult = null;
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? '#c0392b' : '#2c3e50';
+    }
+
+    function renderSections(data) {
+      if (!data || !data.sections) return;
+      resultsEl.innerHTML = '';
+      data.sections.forEach((section, idx) => {
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = section.label || `Section ${idx + 1}`;
+        details.appendChild(summary);
+
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(section, null, 2);
+        details.appendChild(pre);
+        resultsEl.appendChild(details);
+      });
+    }
+
+    function enableDownload(data) {
+      lastResult = data;
+      downloadBtn.disabled = !data;
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'scrape-result.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      setStatus('Scraping... This may take a few seconds.');
+      resultsEl.innerHTML = '';
+      enableDownload(null);
+
+      try {
+        const resp = await fetch('/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || 'Scrape failed');
+        }
+
+        const data = await resp.json();
+        renderSections(data);
+        enableDownload(data);
+        setStatus(`Done via ${data.source || 'unknown'} mode. Sections: ${data.sections?.length || 0}.`);
+      } catch (err) {
+        console.error(err);
+        setStatus(err.message, true);
+      }
+    });
+  </script>
+</body>
+</html>
+

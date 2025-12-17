@@ -1,0 +1,27 @@
+{
+  "name": "lyftr-scraper",
+  "version": "0.1.0",
+  "description": "Simple universal website scraper MVP with FastAPI, static scraping first and Playwright fallback.",
+  "features": [
+    "Static scraping with requests + BeautifulSoup",
+    "Playwright fallback with scrolling and load-more attempt",
+    "Section-aware JSON output (header, main, section, footer)",
+    "Minimal Jinja2 frontend with per-section JSON viewer and download",
+    "Health endpoint for liveness checks"
+  ],
+  "limitations": [
+    "No complex interaction detection",
+    "No advanced ML extraction",
+    "Single load-more attempt and limited scroll depth"
+  ],
+  "api": {
+    "GET /healthz": "Health check returning {status:\"ok\"}",
+    "POST /scrape": "Accepts {url}, returns structured scrape result"
+  },
+  "runtime": {
+    "language": "python",
+    "framework": "fastapi",
+    "requires_playwright_install": true
+  }
+}
+
