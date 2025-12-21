@@ -1,4 +1,4 @@
-# Simple Universal Website Scraper (Lyftr Scraper)
+# Simple Universal Website Scraper 
 
 This project is a beginner-friendly MVP that scrapes a web page, organizes content into section-aware JSON, and presents it through a minimal FastAPI + Jinja2 frontend.
 
@@ -52,4 +52,5 @@ This project is a beginner-friendly MVP that scrapes a web page, organizes conte
 - Static scraping returns immediately unless content is too thin, in which case Playwright is attempted.
 - Errors are recorded in the `trace` block; unhandled failures return HTTP 500.
 - The frontend keeps dependencies minimal and focuses on JSON display and download.
+
 
